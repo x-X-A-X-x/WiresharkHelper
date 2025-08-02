@@ -24,28 +24,27 @@ ip_summary["threat_level"] = pd.cut(
     labels=["Low", "Medium", "High"]
 )
 
-# === 5. Sort for visualization ===
-ip_summary = ip_summary.sort_values("packets", ascending=False)
+# === 5. Sort by packet count (descending) ===
+ip_summary = ip_summary.sort_values("packets", ascending=True)  # ascending for horizontal bar chart
 
 # === 6. Map threat levels to colors ===
 color_map = {"Low": "green", "Medium": "orange", "High": "red"}
 colors = ip_summary["threat_level"].map(color_map)
 
-# === 7. Visualize ===
-plt.figure(figsize=(14, 6))
-bars = plt.bar(ip_summary['IP'], ip_summary['packets'], color=colors)
+# === 7. Visualize as horizontal bar chart ===
+plt.figure(figsize=(12, max(6, len(ip_summary) * 0.4)))  # Adjust height dynamically
+bars = plt.barh(ip_summary['IP'], ip_summary['packets'], color=colors)
 
-# Add threat level labels above each bar
+# Add packet counts and threat levels next to bars
 for i, bar in enumerate(bars):
-    height = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width()/2, height + 1,
-             ip_summary["threat_level"].iloc[i],
-             ha='center', fontsize=8, rotation=90)
+    width = bar.get_width()
+    plt.text(width + 1, bar.get_y() + bar.get_height()/2,
+             f"{ip_summary['packets'].iloc[i]} ({ip_summary['threat_level'].iloc[i]})",
+             va='center', fontsize=8)
 
-plt.xticks(rotation=90)
-plt.xlabel("IP Address")
-plt.ylabel("Packet Count")
-plt.title("IP Addresses and Threat Levels")
+plt.xlabel("Packet Count")
+plt.ylabel("IP Address")
+plt.title("IP Addresses and Threat Levels (Horizontal View)")
 plt.tight_layout()
 plt.show()
 
