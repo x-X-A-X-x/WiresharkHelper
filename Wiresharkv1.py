@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import re
 
 # === 1. Load CSV ===
 file_path = "Test1.csv"  # Change this to your CSV file path
@@ -11,27 +12,31 @@ all_ips = pd.concat([
     df[['Destination', 'Length']].rename(columns={'Destination': 'IP'})
 ])
 
-# === 3. Aggregate IP traffic ===
+# === 3. Filter for IPv4 addresses only ===
+ipv4_pattern = r'^(?:\d{1,3}\.){3}\d{1,3}$'
+all_ips = all_ips[all_ips['IP'].apply(lambda x: bool(re.match(ipv4_pattern, str(x))))]
+
+# === 4. Aggregate IP traffic ===
 ip_summary = all_ips.groupby('IP').agg(
     packets=('IP', 'count'),
     total_bytes=('Length', 'sum')
 ).reset_index()
 
-# === 4. Assign threat levels based on packet count ===
+# === 5. Assign threat levels based on packet count ===
 ip_summary["threat_level"] = pd.cut(
     ip_summary["packets"],
     bins=[0, 10, 100, float("inf")],
     labels=["Low", "Medium", "High"]
 )
 
-# === 5. Sort by packet count (descending) ===
+# === 6. Sort for visualization ===
 ip_summary = ip_summary.sort_values("packets", ascending=True)  # ascending for horizontal bar chart
 
-# === 6. Map threat levels to colors ===
+# === 7. Map threat levels to colors ===
 color_map = {"Low": "green", "Medium": "orange", "High": "red"}
 colors = ip_summary["threat_level"].map(color_map)
 
-# === 7. Visualize as horizontal bar chart ===
+# === 8. Visualize as horizontal bar chart ===
 plt.figure(figsize=(12, max(6, len(ip_summary) * 0.4)))  # Adjust height dynamically
 bars = plt.barh(ip_summary['IP'], ip_summary['packets'], color=colors)
 
@@ -43,12 +48,12 @@ for i, bar in enumerate(bars):
              va='center', fontsize=8)
 
 plt.xlabel("Packet Count")
-plt.ylabel("IP Address")
-plt.title("IP Addresses and Threat Levels (Horizontal View)")
+plt.ylabel("IPv4 Address")
+plt.title("IPv4 Addresses and Threat Levels")
 plt.tight_layout()
 plt.show()
 
-# === 8. Print or save the summary table ===
+# === 9. Print or save the summary table ===
 print(ip_summary)
-ip_summary.to_csv("ip_threat_summary.csv", index=False)
-print("\nSummary saved as 'ip_threat_summary.csv'")
+ip_summary.to_csv("ipv4_threat_summary.csv", index=False)
+print("\nSummary saved as 'ipv4_threat_summary.csv'")
