@@ -1,6 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import re
+import streamlit as st
+
+# === Streamlit App Title ===
+st.title("Wireshark IP Threat Analysis Dashboard")
 
 # === 1. Load CSV ===
 file_path = "Test1.csv"
@@ -38,37 +42,40 @@ ip_summary["threat_level"] = ip_summary.apply(determine_threat, axis=1)
 color_map = {"Low": "green", "Medium": "orange", "High": "red"}
 colors = ip_summary["threat_level"].map(color_map)
 
-# === 6. Visualization 1: Packet Volume ===
-plt.figure(figsize=(12, max(6, len(ip_summary) * 0.4)))
-bars = plt.barh(ip_summary['IP'], ip_summary['packets'], color=colors)
-plt.xlabel("Packet Count")
-plt.ylabel("IPv4 Address")
-plt.title("Packet Volume per IP")
-plt.tight_layout()
-plt.show()
+# === 6. Display the summary table ===
+st.subheader("IP Threat Summary")
+st.dataframe(ip_summary)
 
-# === 7. Visualization 2: Total Traffic Size ===
-plt.figure(figsize=(12, max(6, len(ip_summary) * 0.4)))
-bars = plt.barh(ip_summary['IP'], ip_summary['total_bytes'], color=colors)
-plt.xlabel("Total Traffic (Bytes)")
-plt.ylabel("IPv4 Address")
-plt.title("Total Traffic Size per IP")
-plt.tight_layout()
-plt.show()
+# === 7. Visualization 1: Packet Volume ===
+st.subheader("Packet Volume per IP")
+fig1, ax1 = plt.subplots(figsize=(12, max(6, len(ip_summary) * 0.4)))
+ax1.barh(ip_summary['IP'], ip_summary['packets'], color=colors)
+ax1.set_xlabel("Packet Count")
+ax1.set_ylabel("IPv4 Address")
+ax1.set_title("Packet Volume per IP")
+st.pyplot(fig1)
 
-# === 8. Visualization 3: Protocol Diversity ===
-plt.figure(figsize=(12, 6))
-plt.scatter(ip_summary['packets'], ip_summary['unique_protocols'], c=colors)
+# === 8. Visualization 2: Total Traffic Size ===
+st.subheader("Total Traffic Size per IP")
+fig2, ax2 = plt.subplots(figsize=(12, max(6, len(ip_summary) * 0.4)))
+ax2.barh(ip_summary['IP'], ip_summary['total_bytes'], color=colors)
+ax2.set_xlabel("Total Traffic (Bytes)")
+ax2.set_ylabel("IPv4 Address")
+ax2.set_title("Total Traffic Size per IP")
+st.pyplot(fig2)
+
+# === 9. Visualization 3: Protocol Diversity ===
+st.subheader("Protocol Diversity vs Packet Volume")
+fig3, ax3 = plt.subplots(figsize=(12, 6))
+ax3.scatter(ip_summary['packets'], ip_summary['unique_protocols'], c=colors)
 for i, row in ip_summary.iterrows():
-    plt.text(row['packets'], row['unique_protocols'] + 0.1, row['IP'], fontsize=7)
-plt.xlabel("Packet Count")
-plt.ylabel("Unique Protocols")
-plt.title("Protocol Diversity vs Packet Volume (Possible Port Scanning Detection)")
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+    ax3.text(row['packets'], row['unique_protocols'] + 0.1, row['IP'], fontsize=7)
+ax3.set_xlabel("Packet Count")
+ax3.set_ylabel("Unique Protocols")
+ax3.set_title("Protocol Diversity vs Packet Volume")
+ax3.grid(True)
+st.pyplot(fig3)
 
-# === 9. Save results ===
-print(ip_summary)
+# === 10. Save results ===
 ip_summary.to_csv("ipv4_advanced_threat_summary.csv", index=False)
-print("\nSummary saved as 'ipv4_advanced_threat_summary.csv'")
+st.success("Summary saved as 'ipv4_advanced_threat_summary.csv'")
